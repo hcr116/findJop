@@ -1,0 +1,21 @@
+{
+  "name": "boss-jobs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BOSS直聘 新岗位增量追踪器（本地运行，数据不出本机）",
+  "type": "module",
+  "bin": {
+    "boss-jobs": "src/cli.mjs"
+  },
+  "scripts": {
+    "start": "node src/cli.mjs serve",
+    "run": "node src/cli.mjs run",
+    "login": "node src/cli.mjs login"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "playwright-core": "^1.65.1"
+  }
+}

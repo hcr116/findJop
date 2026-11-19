@@ -1,0 +1,10 @@
+* text=auto
+
+# .bat 必须是 CRLF，否则 cmd 解析会出怪问题
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 二进制，别做换行转换
+*.png binary
+*.ico binary
+*.db binary

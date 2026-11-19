@@ -1,0 +1,18 @@
+# 运行时产物 —— 谁拉下来谁自己生成，别进仓库
+node_modules/
+.boss-profile/
+data/
+runs/
+dev/
+*.log
+
+# 数据库和登录态都在 %APPDATA%\boss-jobs\ 下，本来就不在仓库目录里；
+# 下面两条是防手滑（有人把数据目录挪进项目里时）
+data.db
+browser-profile/
+login-state.json
+
+# 系统垃圾
+Thumbs.db
+desktop.ini
+.DS_Store

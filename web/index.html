@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BOSS 岗位追踪</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="dot"></span>
+        <h1>BOSS 岗位追踪</h1>
+        <span class="sub" id="homePath" title="">本地运行 · 数据不出本机</span>
+      </div>
+      <div class="actions">
+        <button id="btnRun" class="btn primary">立即抓取一轮</button>
+        <button id="btnProfile" class="btn">我的档案</button>
+        <button id="btnConfig" class="btn">搜索配置</button>
+        <button id="btnLog" class="btn">运行日志</button>
+        <a id="btnExport" class="btn" href="/api/export.csv">导出 CSV</a>
+      </div>
+    </header>
+
+    <section class="stats" id="stats">
+      <div class="stat"><span class="num" id="stToday">–</span><span class="lbl">今日新增</span></div>
+      <div class="stat"><span class="num" id="stWeek">–</span><span class="lbl">近 7 天</span></div>
+      <div class="stat"><span class="num" id="stTotal">–</span><span class="lbl">库内总数</span></div>
+      <div class="stat"><span class="num" id="stCompany">–</span><span class="lbl">覆盖公司</span></div>
+      <div class="stat"><span class="num" id="stStar">–</span><span class="lbl">已收藏</span></div>
+    </section>
+
+    <section class="toolbar">
+      <div class="seg" id="segSince">
+        <button class="seg-btn active" data-since="today">今天</button>
+        <button class="seg-btn" data-since="7d">近 7 天</button>
+        <button class="seg-btn" data-since="30d">近 30 天</button>
+        <button class="seg-btn" data-since="">全部</button>
+      </div>
+      <div class="seg" id="segStatus">
+        <button class="seg-btn active" data-status="">全部</button>
+        <button class="seg-btn" data-status="new">未处理</button>
+        <button class="seg-btn" data-status="starred">已收藏</button>
+        <button class="seg-btn" data-status="ignored">已忽略</button>
+        <button class="seg-btn" data-status="applied">已投递</button>
+        <button class="seg-btn" data-status="filtered" title="被「我的档案」挡掉的岗位">档案滤掉</button>
+      </div>
+      <input id="searchBox" class="search" type="search" placeholder="搜岗位 / 公司 / JD 正文…" />
+      <select id="tagFilter" class="search" style="max-width:170px;flex:none" title="按标签筛选">
+        <option value="">全部标签</option>
+      </select>
+      <div class="seg" id="segSort">
+        <button class="seg-btn active" data-sort="recent">最新</button>
+        <button class="seg-btn" data-sort="score">匹配度</button>
+      </div>
+      <button id="btnRefresh" class="btn ghost" title="刷新">↻</button>
+    </section>
+
+    <main id="list" class="list"></main>
+    <div id="empty" class="empty" hidden>
+      <p class="big">还没有数据</p>
+      <p>先去「搜索配置」加一个关键词，然后点「立即抓取一轮」。</p>
+      <p class="hint">第一次使用需要扫码登录一次，登录态会保存在本机。</p>
+    </div>
+
+    <!-- 岗位详情抽屉 -->
+    <aside id="drawer" class="drawer" hidden>
+      <div class="drawer-head">
+        <div>
+          <h2 id="dTitle">–</h2>
+          <p class="muted" id="dCompany">–</p>
+        </div>
+        <button id="dClose" class="btn ghost">✕</button>
+      </div>
+      <div class="drawer-meta" id="dMeta"></div>
+      <div id="dScore" style="margin:0 0 14px"></div>
+      <div class="drawer-actions">
+        <button class="btn" data-act="starred">收藏</button>
+        <button class="btn" data-act="applied">已投递</button>
+        <button class="btn" data-act="ignored">忽略</button>
+        <button class="btn" data-act="new">重置为未处理</button>
+        <a id="dOpen" class="btn primary" target="_blank" rel="noreferrer">在 BOSS 打开</a>
+      </div>
+
+      <div class="tag-area">
+        <div class="tag-area-head">
+          <span>标签</span>
+          <span class="muted" style="font-size:12px">标到公司会让这家公司所有岗位都带上</span>
+        </div>
+        <div class="tag-list" id="dTags"></div>
+        <div class="tag-add">
+          <input id="tagInput" list="tagSuggest" placeholder="输入标签名，回车添加" autocomplete="off" />
+          <datalist id="tagSuggest"></datalist>
+          <select id="tagScope">
+            <option value="job">标到岗位</option>
+            <option value="company">标到公司</option>
+          </select>
+          <button id="tagAdd" class="btn">添加</button>
+        </div>
+      </div>
+
+      <div class="app-area">
+        <div class="tag-area-head">
+          <span>投递进度</span>
+          <span class="muted" style="font-size:12px" id="dStageNow">还没记录</span>
+        </div>
+        <div class="stage-btns" id="dStages"></div>
+        <div class="tag-add" style="margin:8px 0">
+          <input id="appNote" placeholder="备注（可选，比如：约了下周三下午一面）—— 填好后点上面的阶段按钮" />
+        </div>
+        <div class="app-timeline" id="dTimeline"></div>
+      </div>
+      <div class="jd" id="dJd"></div>
+      <div class="company-hist" id="dHist"></div>
+    </aside>
+
+    <!-- 配置 / 日志弹窗 -->
+    <div id="modal" class="modal" hidden>
+      <div class="modal-box">
+        <div class="modal-head">
+          <div class="tabs" id="tabs">
+            <button class="tab active" data-tab="searches">搜索配置</button>
+            <button class="tab" data-tab="profile">我的档案</button>
+            <button class="tab" data-tab="log">运行日志</button>
+            <button class="tab" data-tab="about">说明</button>
+          </div>
+          <button id="mClose" class="btn ghost">✕</button>
+        </div>
+        <div class="modal-body">
+          <div id="paneSearches" class="pane"></div>
+          <div id="paneProfile" class="pane" hidden></div>
+          <div id="paneLog" class="pane" hidden></div>
+          <div id="paneAbout" class="pane" hidden></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
